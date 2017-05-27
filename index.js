@@ -6,13 +6,16 @@ var cake = {
   bakeTime: "45 minutes",
   customer: "Tommy",
   decorate: function(updateFunction) {
+    // this here is the object cake, we use this to call an object's method
     var status = "Decorating with " + this.topping + ". Ready to eat soon!"
     updateFunction(status)
     setTimeout(function() {
-      updateFunction(serve.apply(this, "Happy Eating!", this.customer))
-    }, 2000)
+      updateFunction(serve.apply(this, ["Happy Eating!", this.customer]))
+    }.bind(this), 2000)
   }
 }
+
+// setTimeout delays the execution of a function while at the same time moving it out into a global context. The setTimeout function needs to be bound to the appropriate context, the cake.
 
 var pie = {
   name: "Apple Pie",
@@ -24,13 +27,14 @@ var pie = {
 }
 
 function makeCake() {
-  var updateCakeStatus;
-  mix(updateCakeStatus)
+  var updateCakeStatus = updateStatus.bind(this)
+  mix.call(cake, updateCakeStatus)
 }
 
 function makePie() {
-  var updatePieStatus;
-  mix(updatePieStatus)
+  var updatePieStatus = updateStatus.bind(this);
+  mix.call(pie, updatePieStatus)
+  pie.decorate = cake.decorate.bind(pie)
 }
 
 function updateStatus(statusText) {
@@ -39,29 +43,37 @@ function updateStatus(statusText) {
 
 function bake(updateFunction) {
   var status = "Baking at " + this.bakeTemp + " for " + this.bakeTime
+  updateFunction(status)
   setTimeout(function() {
-    cool(updateFunction)
-  }, 2000)
+    cool.call(this, updateFunction)
+  }.bind(this), 2000)
 }
 
 function mix(updateFunction) {
+  debugger
   var status = "Mixing " + this.ingredients.join(", ")
-  setTimeout(function() {
-    bake(updateFunction)
-  }, 2000)
   updateFunction(status)
+  setTimeout(function() {
+    bake.call(this, updateFunction)
+  }.bind(this), 2000)
 }
 
 function cool(updateFunction) {
   var status = "It has to cool! Hands off!"
+  updateFunction(status)
   setTimeout(function() {
     this.decorate(updateFunction)
-  }, 2000)
+  }.bind(this), 2000)
 }
 
 function makeDessert() {
-  //add code here to decide which make... function to call
-  //based on which link was clicked
+  // this in here is whatever link was clicked i.e. either cookLinks[0] or cookLinks[1]
+  if (this === document.getElementsByClassName("js-make")[0]) {
+    makeCake.call(document.getElementById("cake"))
+  } else {
+    makePie.call(document.getElementById("pie"))
+  }
+  debugger
 }
 
 function serve(message, customer) {
